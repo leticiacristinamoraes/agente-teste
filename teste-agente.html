@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste do Agente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            margin-left: 10px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e7f3fe;
+            border: 1px solid #b3d4fc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste do Agente - Melatonina</h1>
+    <p>Digite sua pergunta abaixo e clique em "Enviar".</p>
+    <input type="text" id="question" placeholder="Digite sua pergunta aqui">
+    <button onclick="sendQuestion()">Enviar</button>
+    <p id="response"></p>
+
+    <script>
+        async function sendQuestion() {
+            const question = document.getElementById('question').value;
+
+            // Substitua pela URL do seu webhook
+            const webhookURL = 'http://localhost:5678/webhook-test/b6d2bf1e-d1fe-4ec8-96f3-8ff95b76f6a4';
+
+            try {
+                const response = await fetch(webhookURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                const result = await response.json();
+                document.getElementById('response').innerText = result.response;
+            } catch (error) {
+                document.getElementById('response').innerText = 'Erro ao conectar com o agente.';
+                console.error('Erro:', error);
+            }
+        }
+    </script>
+</body>
+</html>
