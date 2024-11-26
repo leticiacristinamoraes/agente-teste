@@ -1,71 +1,183 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Teste do Agente</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        input {
-            padding: 10px;
-            width: 300px;
-            font-size: 16px;
-        }
-        button {
-            padding: 10px;
-            font-size: 16px;
-            margin-left: 10px;
-            cursor: pointer;
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #response {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #e7f3fe;
-            border: 1px solid #b3d4fc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agente de Melatonina</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #chat {
+      width: 80%;
+      max-width: 600px;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    .user {
+      background: #d1e7dd;
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .assistant {
+      background: #f8d7da;
+      align-self: flex-start;
+      text-align: left;
+    }
+
+    #input-area {
+      display: flex;
+      padding: 10px;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    #sendButton {
+      margin-left: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #sendButton:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-    <h1>Teste do Agente - Melatonina</h1>
-    <p>Digite sua pergunta abaixo e clique em "Enviar".</p>
-    <input type="text" id="question" placeholder="Digite sua pergunta aqui">
-    <button onclick="sendQuestion()">Enviar</button>
-    <p id="response"></p>
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="input-area">
+      <input id="userInput" type="text" placeholder="Digite sua pergunta...">
+      <button id="sendButton">Enviar</button>
+    </div>
+  </div>
 
-    <script>
-        async function sendQuestion() {
-            const question = document.getElementById('question').value;
+  <script>
+    // URL do Webhook do n8n
+    const webhookUrl = "https://devcustomer.app.n8n.cloud/webhook-test/4ce9a0d0-8a48-4749-84d0-516e2f77ee4b";
+ // Substitua pela URL do seu Webhook
 
-            // Substitua pela URL do seu webhook
-            const webhookURL = 'http://localhost:5678/webhook-test/b6d2bf1e-d1fe-4ec8-96f3-8ff95b76f6a4';
+    // Contexto global da conversa
+    let context = [];
 
-            try {
-                const response = await fetch(webhookURL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question })
-                });
+    // Função para enviar a mensagem ao Webhook
+    const sendMessage = async (question) => {
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        question: question, // Texto da pergunta
+        context: context,   // Contexto da conversa
+      }),
+    });
 
-                const result = await response.json();
-                document.getElementById('response').innerText = result.response;
-            } catch (error) {
-                document.getElementById('response').innerText = 'Erro ao conectar com o agente.';
-                console.error('Erro:', error);
-            }
-        }
-    </script>
+    // Exibe a resposta do servidor no console
+    const responseBody = await response.text();
+    console.log("Resposta do servidor:", responseBody);
+
+    if (!response.ok) {
+      throw new Error(`Erro no servidor: ${response.status}`);
+    }
+
+    const data = JSON.parse(responseBody);
+    context = data.context; // Atualiza o contexto
+    return data.response;   // Retorna a resposta
+  } catch (error) {
+    console.error("Erro ao enviar mensagem:", error.message);
+    return "Desculpe, ocorreu um erro ao processar sua mensagem.";
+  }
+};
+
+
+
+    // Referências aos elementos do DOM
+    const messagesDiv = document.getElementById("messages");
+    const userInput = document.getElementById("userInput");
+    const sendButton = document.getElementById("sendButton");
+
+    // Função para exibir uma mensagem na interface
+    const displayMessage = (message, type) => {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${type}`;
+      messageDiv.textContent = message;
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll para a última mensagem
+    };
+
+    // Função para lidar com o envio de mensagens
+    const handleSendMessage = async () => {
+      const question = userInput.value.trim();
+
+      if (!question) {
+        alert("Por favor, insira uma mensagem válida.");
+        return;
+      }
+
+      // Exibe a mensagem do usuário
+      displayMessage(question, "user");
+
+      // Limpa o campo de input
+      userInput.value = "";
+
+      // Envia a mensagem ao Webhook e aguarda a resposta
+      const response = await sendMessage(question);
+
+      // Exibe a resposta do agente
+      displayMessage(response, "assistant");
+    };
+
+    // Adiciona evento ao botão de enviar
+    sendButton.addEventListener("click", handleSendMessage);
+
+    // Permite enviar mensagem pressionando "Enter"
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        handleSendMessage();
+      }
+    });
+  </script>
 </body>
 </html>
